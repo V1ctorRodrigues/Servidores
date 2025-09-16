@@ -1,28 +1,26 @@
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
 
-def conversar_cliente(sock_cliente, end_cliente):
-    print(f'Conexão recebida de {end_cliente}')
-
-    print('Recebendo dados do cliente')
+def receber(sock):
     while True:
-        dados = sock_cliente.recv(1024)
-        print(f'Dados recebidos do cliente {end_cliente}: {dados.decode()}')
+        dados = sock.recv(1024)
+        if not dados:
+            break
+        print("\n[Cliente]:", dados.decode())
 
-print('Criando um socket TCP')
+def enviar(sock):
+    while True:
+        msg = input()
+        sock.sendall(msg.encode())
+
+print("Servidor iniciando...")
 socket_servidor = socket(AF_INET, SOCK_STREAM)
+socket_servidor.bind(("0.0.0.0", 8080))
+socket_servidor.listen(1)
 
-print('Identificando em qual porta o servidor vai escutar')
-socket_servidor.bind(('0.0.0.0', 8080))
+print("Aguardando conexão...")
+sock_cliente, end_cliente = socket_servidor.accept()
+print("Cliente conectado:", end_cliente)
 
-print('Colocando o servidor em modo de escuta')
-socket_servidor.listen()
-
-print('Servidor escutando na porta 8080')
-while True:
-    print('Aguardando conexão de um cliente')
-    socket_cliente, endereco_cliente = socket_servidor.accept()
-
-    thread = Thread(target=conversar_cliente, args=(socket_cliente, endereco_cliente))
-
-    thread.start()
+Thread(target=receber, args=(sock_cliente,)).start()
+Thread(target=enviar, args=(sock_cliente,)).start()
